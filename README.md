@@ -1,5 +1,10 @@
 # webserv
 
+## TODO
+
+- [ ] Read (and understand) the subject.
+- [ ] Allowed functions
+
 ## RFC
 
 "**Please read the RFC** and do some tests with telnet and NGINX before
