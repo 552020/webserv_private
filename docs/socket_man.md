@@ -1,5 +1,10 @@
 # socket()
 
+
+# What is a socket ?
+a socket acts as an endpoint for network communication. Sockets allow for establishing a communication channel between a server and one or more clients over a network. In a web server scenario, sockets are used to listen for, accept, and manage HTTP requests from clients (such as web browsers), and then to send HTTP responses back to those clients.
+
+
 ## man page
 
 **NAME**

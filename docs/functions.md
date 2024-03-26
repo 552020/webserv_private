@@ -2,6 +2,9 @@
 
 " Everything in C++ 98. execve, dup, dup2, pipe, strerror, gai_strerror, errno, dup, dup2, fork, socketpair, **htons**, htonl, ntohs, ntohl, select, poll, epoll (epoll_create, epoll_ctl, epoll_wait), kqueue (kqueue, kevent), socket, accept, listen, send, recv, chdir bind, connect, getaddrinfo, freeaddrinfo, setsockopt, getsockname, getprotobyname, fcntl, close, read, write, waitpid, kill, signal, access, stat, open, opendir, readdir and closedir."
 
+
+=> None of theese functionsare inherently C++ functions. They are all from the C standard library, POSIX standard, or system-specific extensions that are primarily used in C programming 
+
 ## Everything in C++98
 
 C++98 and C++ in general doesn't inherently include many system-level functions, but suppor the usage of the C counterpart, since it allows direct usage of C libraries and functions.
@@ -37,7 +40,7 @@ File and directories:
 - access
 - stat [NEW]
 
-C++98 counerparts: C++ has its won file stream libraries (like <fstream>) but these functions provide more direct control.
+C++98 counerparts: C++ has its own file stream libraries (like <fstream>) but these functions provide more direct control.
 
 ## Network communication
 
