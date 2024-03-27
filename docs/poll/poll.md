@@ -32,11 +32,20 @@ struct pollfd {
 
 The event bitmasks in events and revents have the following bits:
 
-[In a bitmask, each bit represents a different flag or setting, and these bits correspond to individual values. When a bit is set to 1, it indicates that the associated setting or flag is "on" or active. Conversely, a bit set to 0 means the setting is "off" or inactive. This allows multiple flags to be stored in a single integer variable, making it an efficient way to track a combination of on/off settings.]
+<details>
+<summary>
+*Note on events as bitmask*
+</summary>
+In a bitmask, each bit represents a different flag or setting, and these bits correspond to individual values. When a bit is set to 1, it indicates that the associated setting or flag is "on" or active. Conversely, a bit set to 0 means the setting is "off" or inactive. This allows multiple flags to be stored in a single integer variable, making it an efficient way to track a combination of on/off settings. POLLIN is represented by 1 (0000 0001), and POLLPRI by 2 (0000 0010), so that basically you could listen for both events (0000 0011). You would set this by writing `int event = POLLIN | POLLPRI`]
+</details>
+
+[*Note on events vs revents*: events are the event we are listening for for a certain file descriptor, revents return the 'state' of the file descriptor at the moment the event we are listening for occured. For example we could listen only for POLLIN (data available to read), and when POLLIN happens, when data are available to read, the returned revents could containe not only POLLIN, but also POLLHUP (the other side hung up), and POLLER (an error occured on the connection)]
 
 - **POLLERR** An exceptional condition has occurred on the device or socket. This flag is output only, and ignored if present in the input events bitmask.
 
 - **POLLHUP** The device or socket has been disconnected. This flag is output only, and ignored if present in the input events bitmask. Note that POLLHUP and POLLOUT are mutually exclusive and should never be present in the revents bitmask at the same time.
+
+[Note on POLLHUP and POLLOUT being mutalliy exclusive:]
 
 - **POLLIN** Data other than high priority data may be read without blocking. This is equivalent to ( POLLRDNORM | POLLRDBAND).
 
@@ -66,37 +75,61 @@ The event bitmasks in events and revents have the following bits:
 
 # poll.h Compatibility and Events
 
-This file is intended to be compatible with the traditional `poll.h`.
+# Ubuntu Implementation of poll.h
 
-## Requestable Events
+**Note:** Never use `<bits/poll.h>` directly; include `<sys/poll.h>` instead.
 
-These are the events that can be requested in the `events` field of a `pollfd` structure. If `poll(2)` finds any of these set in the `events` field, they are copied to `revents` on return.
+## Event Types for Polling
 
-- `POLLIN`: 0x0001 - Any readable data available.
-- `POLLPRI`: 0x0002 - OOB/Urgent readable data.
-- `POLLOUT`: 0x0004 - File descriptor is writeable.
-- `POLLRDNORM`: 0x0040 - Non-OOB/URG data available.
-- `POLLWRNORM`: `POLLOUT` - No write type differentiation.
-- `POLLRDBAND`: 0x0080 - OOB/Urgent readable data.
-- `POLLWRBAND`: 0x0100 - OOB/Urgent data can be written.
+Event types that can be polled for. These bits may be set in `events` to indicate the interesting event types; they will appear in `revents` to indicate the status of the file descriptor.
 
-## FreeBSD Extensions
+- `POLLIN`: 0x001 - There is data to read.
+- `POLLPRI`: 0x002 - There is urgent data to read.
+- `POLLOUT`: 0x004 - Writing now will not block.
 
-Polling on a regular file might return one of these events (currently only supported on local filesystems).
+### X/Open System Interfaces Extension
 
-- `POLLEXTEND`: 0x0200 - File may have been extended.
-- `POLLATTRIB`: 0x0400 - File attributes may have changed.
-- `POLLNLINK`: 0x0800 - (Un)link/rename may have happened.
-- `POLLWRITE`: 0x1000 - File's contents may have changed.
+These values are defined in XPG4.2.
 
-## Unconditional Events
+- `POLLRDNORM`: 0x040 - Normal data may be read.
+- `POLLRDBAND`: 0x080 - Priority data may be read.
+- `POLLWRNORM`: 0x100 - Writing now will not block.
+- `POLLWRBAND`: 0x200 - Priority data may be written.
 
-These events are set if they occur regardless of whether they were requested.
+### GNU Extensions (Linux-specific)
 
-- `POLLERR`: 0x0008 - Some poll error occurred.
-- `POLLHUP`: 0x0010 - File descriptor was "hung up".
-- `POLLNVAL`: 0x0020 - Requested events "invalid".
+These are extensions for Linux.
 
-The standard events mask includes:
+- `POLLMSG`: 0x400
+- `POLLREMOVE`: 0x1000
+- `POLLRDHUP`: 0x2000
+
+## Implicitly Polled Event Types
+
+Event types always implicitly polled for. These bits need not be set in `events`, but they will appear in `revents` to indicate the status of the file descriptor.
+
+- `POLLERR`: 0x008 - Error condition.
+- `POLLHUP`: 0x010 - Hung up.
+- `POLLNVAL`: 0x020 - Invalid polling request.
 
 - `POLLSTANDARD`: `(POLLIN|POLLPRI|POLLOUT|POLLRDNORM|POLLRDBAND|POLLWRBAND|POLLERR|POLLHUP|POLLNVAL)`
+
+### events vs revents
+
+Even if we are listeing only for POLLIN, when poll returns, cause POLLIN happened, all three if could be positively triggered.
+
+```c
+int ret = poll(fds, POLLIN, timeout_milliseconds);
+if (ret > 0) {
+    if (fds[0].revents & POLLIN) {
+        // Data available to read.
+    }
+    if (fds[0].revents & POLLHUP) {
+        // Connection closed by the other side.
+    }
+    if (fds[0].revents & POLLERR) {
+        // An error occurred.
+    }
+}
+
+```
