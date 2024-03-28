@@ -3,6 +3,13 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+/*
+We want to check if POLLHUP let poll() return,
+So we will listen for an event that will not happen
+Create a condition that will trigger POLLHUP
+and check if poll returns
+ */
+
 void print_revents_binary(short revents) {
   for (int i = 15; i >= 0; i--) {
     putchar((revents & (1 << i)) ? '1' : '0');
@@ -57,7 +64,9 @@ int main() {
 
   // Setup poll() to monitor the other socket
   pfd.fd = socket[0];
-  pfd.events = POLLIN;
+  //   pfd.events = POLLIN;
+  //   pfd.events = POLLPRI;
+  pfd.events = POLLOUT;
   pfd.revents = 0;
 
   // Call poll() with a timeout of 5000 milliseconds

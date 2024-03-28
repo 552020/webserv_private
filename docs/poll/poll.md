@@ -43,11 +43,18 @@ In a bitmask, each bit represents a different flag or setting, and these bits co
 
 - **POLLERR** An exceptional condition has occurred on the device or socket. This flag is output only, and ignored if present in the input events bitmask.
 
+[Not so easy to reproduce]
+
 - **POLLHUP** The device or socket has been disconnected. This flag is output only, and ignored if present in the input events bitmask. Note that POLLHUP and POLLOUT are mutually exclusive and should never be present in the revents bitmask at the same time.
 
 [Note on POLLHUP and POLLOUT being mutalliy exclusive:]
+[Note on the name POLLHUP. The 'HUP' in POLLHUP mean 'Hung UP']
+[A POLLHUP event let poll returns even if we don't listen explicitely for it. ]
+[It is relatively easy to reproduce]
 
 - **POLLIN** Data other than high priority data may be read without blocking. This is equivalent to ( POLLRDNORM | POLLRDBAND).
+
+[POLLIN is triggered when the fd, usually a socket is ready to write data to it. When basicaly a socket is ready to behave like STDIN]
 
 - **POLLNVAL** The file descriptor is not open. This flag is output only, and ignored if present in the input events bitmask.
 
