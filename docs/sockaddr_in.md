@@ -2,6 +2,16 @@
 
 The struct sockaddr_in is a structure defined in the <netinet/in.h> header file in POSIX-compliant systems. It is used to specify an endpoint address to which to connect a socket, particularly for IPv4 addresses. This structure is used when setting up connections using the Internet Protocol (IP).
 
+There are other siblings structs defined in different networking header files:
+
+- sockaddr: the generic one
+- sockaddr_in: for IPv4 addresses
+- sockaddr_in6: for IPv6 addresses
+- sockaddr_un: for 'local sockets' aka UNIX domain sockets
+- sockaddr_storage: for protocol agnostic code
+
+For a more detailed exploration of these structures and their applications, please refer to the `sockaddr_family.md` document.
+
 The struct is formed like this:
 
 ```c
@@ -33,14 +43,6 @@ This field contains the IP address for the socket. The struct in_addr is another
 # sin_zero
 
 This is a padding field, used to make the size of struct sockaddr_in equal to that of struct sockaddr, which is a more general structure used for socket API functions like bind(), connect(), and accept(). The sin_zero field should be set to all zeros using a function like memset() before using the structure. This field is not used for any functional purpose; its presence is solely for compatibility with the general socket address structure.
-
-We have also:
-
-- sockaddr: the generic one
-- sockaddr_in: for IPv4 addresses
-- sockaddr_in6: for IPv6 addresses
-- sockaddr_un: for 'local sockets' aka UNIX domain sockets
-- sockaddr_storage: for protocol agnostic code
 
 ## Usage
 
@@ -90,25 +92,59 @@ This function is used by servers to accept a connection request from a client. I
 int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 ```
 
-### 6. **sendto() and recvfrom()**
+### 6. **send() and recv()**
 
-These functions are used for sending and receiving data from a specific address, useful in connectionless protocols like UDP. They use `struct sockaddr_in` to specify the destination or source address.
+These functions are used for sending and receiving data in a connection-oriented manner, primarily with protocols like TCP. Although they can work with `struct sockaddr_in` for specifying addresses when establishing connections, their primary use in this context does not directly involve addressing as it's handled during the connection setup phase.
 
 ```c
-sendto(int sockfd, const void *msg, size_t len, int flags,
-       const struct sockaddr *dest_addr, socklen_t addrlen);
+send(int sockfd, const void *msg, size_t len, int flags);
 
-recvfrom(int sockfd, void *buf, size_t len, int flags,
-         struct sockaddr *src_addr, socklen_t *addrlen);
+recv(int sockfd, void *buf, size_t len, int flags);
 ```
 
-### 7. **getsockname() and getpeername()**
+Note: The `struct sockaddr_in` is also applicable when using `sendto()` and `recvfrom()` functions for specifying the destination or source address. However, in this project, `sendto()` and `recvfrom()` are not permitted as they are utilized for connectionless communication (UDP), which does not align with the project's requirements.
 
-These functions retrieve the current address to which a socket is bound (`getsockname()`) or the address of the peer connected to a socket (`getpeername()`), using `struct sockaddr_in` to store the addresses.
+### 7. **getsockname()**
+
+This function retrieves the current address to which a socket is bound, using `struct sockaddr_in` to store the address.
 
 ```c
 getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
-getpeername(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 ```
 
-These system calls and functions facilitate various aspects of network communication, such as setting up connections, transmitting data, and querying socket information, with `struct sockaddr_in` playing a crucial role in managing address information for IPv4 networking.
+This system call facilitates an aspect of network communication such as querying socket information, with `struct sockaddr_in` playing a crucial role in managing address information for IPv4 networking.
+
+Given the constraints of the Webserv project, where the goal is to implement a web server supporting HTTP communication, the `getpeername()` function is not allowed. The project's allowed functions and system calls focus on establishing connections, data transmission, and server-side socket management without the necessity for `getpeername()`. This function, which retrieves the address of the peer connected to a socket, is not required as the server's implementation within the project guidelines is designed to manage client connections and data flow without needing to directly query the client's address after the connection is established. This approach aligns with the development of a web server that focuses on efficiently handling HTTP requests and responses, ensuring the server remains non-blocking and performs optimally under the specified C++ 98 standard.
+
+Your summary of the usage of `struct sockaddr_in` across various network programming functions is quite comprehensive. It accurately describes the primary ways in which this structure is utilized in the context of socket programming, particularly for IPv4 network communication. You've covered the main functions (`socket()`, `bind()`, `connect()`, `listen()`, `accept()`, `send()`, `recv()`, and `getsockname()`) that are fundamental to establishing connections, transmitting data, and managing sockets.
+
+There are a couple of other functions and concepts where `struct sockaddr_in` could play a role, albeit indirectly in some cases, or in specific network programming scenarios that weren't explicitly covered in your summary:
+
+### 8. `getaddrinfo()` and `freeaddrinfo()`
+
+While not directly using `struct sockaddr_in`, `getaddrinfo()` is an important function for modern network programming that simplifies the process of preparing socket addresses. It's used to resolve hostnames into a dynamically allocated linked list of `struct addrinfo` records, which include `struct sockaddr` pointers suitable for use in network communication functions. This is particularly useful for setting up client sockets. `struct sockaddr_in` can be extracted or manipulated from the `addrinfo` structure when dealing with IPv4 addresses.
+
+```c
+int getaddrinfo(const char *node, const char *service,
+                const struct addrinfo *hints,
+                struct addrinfo **res);
+```
+
+### 9. `select()`, `poll()`, and `epoll()`
+
+These functions are used for monitoring multiple file descriptors to see if any of them can perform I/O operations (like read or write) without blocking. While they don't use `struct sockaddr_in` directly, they are crucial in the context of servers that handle multiple connections simultaneously. Efficient use of these functions often involves sockets that have been set up and bound to local addresses using `struct sockaddr_in` (or other similar structs) and which are indentfied by file descriptors.
+
+### 10. `setsockopt()` and `getsockopt()`
+
+These functions are used to set and get options on sockets, respectively. Options can affect the behavior of the socket, such as enabling broadcast messages on a datagram socket or setting the socket to be non-blocking. While these functions don't deal directly with `struct sockaddr_in`, they are often used in conjunction with sockets that are configured using this structure to fine-tune their behavior.
+
+```c
+int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
+int getsockopt(int sockfd, int level, int optname, void *optval, socklen_t *optlen);
+```
+
+### 11. Direct Socket Address Manipulation
+
+In some advanced scenarios, programmers might directly manipulate the `struct sockaddr_in` to perform operations like creating custom multicast groups (by setting the IP address to a multicast address) or binding a socket to a specific interface using `setsockopt()` with the `SO_BINDTODEVICE` option.
+
+In conclusion, while your document thoroughly addresses the fundamental use cases of `struct sockaddr_in` in network programming, these additional functions and scenarios also benefit from understanding and utilizing this structure. They underscore the versatility and centrality of `struct sockaddr_in` in network programming for IPv4 communications.
