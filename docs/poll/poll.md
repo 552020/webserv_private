@@ -41,22 +41,28 @@ In a bitmask, each bit represents a different flag or setting, and these bits co
 
 [*Note on events vs revents*: events are the event we are listening for for a certain file descriptor, revents return the 'state' of the file descriptor at the moment the event we are listening for occured. For example we could listen only for POLLIN (data available to read), and when POLLIN happens, when data are available to read, the returned revents could containe not only POLLIN, but also POLLHUP (the other side hung up), and POLLER (an error occured on the connection)]
 
-- **POLLERR** An exceptional condition has occurred on the device or socket. This flag is output only, and ignored if present in the input events bitmask.
+- **POLLERR** An exceptional condition has occurred on the device or socket. This flag is `output only`, and ignored if present in the input events bitmask.
 
-[Not so easy to reproduce]
+[Not so easy to reproduce this error in a program]
 
-- **POLLHUP** The device or socket has been disconnected. This flag is output only, and ignored if present in the input events bitmask. Note that POLLHUP and POLLOUT are mutually exclusive and should never be present in the revents bitmask at the same time.
+- **POLLHUP** The device or socket has been disconnected. This flag is `output only`, and ignored if present in the input events bitmask. Note that POLLHUP and POLLOUT are mutually exclusive and should never be present in the revents bitmask at the same time.
 
 [Note on POLLHUP and POLLOUT being mutalliy exclusive:]
-[Note on the name POLLHUP. The 'HUP' in POLLHUP mean 'Hung UP']
-[A POLLHUP event let poll returns even if we don't listen explicitely for it. ]
-[It is relatively easy to reproduce]
+[Note on the name POLLHUP. The 'HUP' in POLLHUP means 'Hung UP']
+[A POLLHUP event let poll returns even if we don't listen explicitely for it: see the pollhup.c file. It is relatively easy to reproduce]
 
 - **POLLIN** Data other than high priority data may be read without blocking. This is equivalent to ( POLLRDNORM | POLLRDBAND).
 
-[POLLIN is triggered when the fd, usually a socket is ready to write data to it. When basicaly a socket is ready to behave like STDIN]
+[POLLIN is triggered when a file descriptor, usually a socket, has data available for reading without blocking. This condition indicates that the system can read data other than high-priority data, similar to how one would read from standard input (STDIN). POLLIN is equivalent to combining POLLRDNORM and POLLRDBAND, which means both normal and out-of-band data are ready to be read. POLLIN listens for both of them. This flag is essential in network programming and IPC (Interprocess Communication) for efficiently managing data transmission by signaling when it's appropriate to read from a file descriptor.]
 
-- **POLLNVAL** The file descriptor is not open. This flag is output only, and ignored if present in the input events bitmask.
+[Note on POLLRDNNORM and POLLRDBAND:
+
+- for the meaning see the section of these errors
+- POLLRDNORM and POLLRDBAND, means respectively 'Normal Data is available for reading and Out-Of-Band (Priority) Data is available for reading. The distinction between normal data and priority data pertains not the http layer but the TCP/IP layer. It seems that a web server should not handle at all the POLLRDBAND event. A short check in different codebase gave as result that no one is explicitely handling POLLRDBAND events]
+
+- **POLLNVAL** The file descriptor is not open. This flag is `output only`, and ignored if present in the input events bitmask.
+
+It means: POLL INVALID (REQUEST)
 
 - **POLLOUT** Normal data may be written without blocking. This is equivalent to POLLWRNORM.
 
@@ -64,7 +70,11 @@ In a bitmask, each bit represents a different flag or setting, and these bits co
 
 - **POLLRDBAND** Priority data may be read without blocking.
 
+`POLL`, `RD` (related to read operations), `BAND` ('out of BAND', which is a term used in networking to describe data that is sent outside of the regular data stream, often with higher priority. )
+
 - **POLLRDNORM** Normal data may be read without blocking.
+
+`POLL`, `RD` (related to read operations), `NORM` (the file descriptor have 'normal' data available for reading)
 
 - **POLLWRBAND** Priority data may be written without blocking.
 

@@ -8,6 +8,28 @@
 const int PORT = 8080;
 const int BUFFER_SIZE = 1024;
 
+const char *returnHTML() {
+  return "HTTP/1.1 200 OK\nContent-Type: text/html\n"
+         "Content-Length: 198\n\n"
+         "<!DOCTYPE html>"
+         "<html>"
+         "<head>"
+         "<style>"
+         "h1 {"
+         "  background-color: yellow;"
+         "  color: lightblue;"
+         "  border: 2px solid pink;"
+         "  padding: 10px;"
+         "  text-align: center;"
+         "}"
+         "</style>"
+         "</head>"
+         "<body>"
+         "<h1>Hello, Webserv!</h1>"
+         "</body>"
+         "</html>";
+}
+
 int main() {
   int server_fd, new_socket;
   long valread;
@@ -15,8 +37,6 @@ int main() {
   int addrlen = sizeof(address);
 
   char buffer[BUFFER_SIZE] = {0};
-  const char *hello = "HTTP/1.1 200 OK\nContent-Type: "
-                      "text/plain\nContent-Length: 12\n\nHello world!";
 
   // Creating socket file descriptor
   if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
@@ -50,9 +70,12 @@ int main() {
       perror("In read");
       exit(EXIT_FAILURE);
     }
+    std::cout << "Received http request: " << std::endl << buffer << std::endl;
     printf("%s\n", buffer);
-    write(new_socket, hello, strlen(hello));
-    printf("------------------Hello message sent-------------------\n");
+    // Respond to the request with some HTML
+    write(new_socket, returnHTML(), strlen(returnHTML()));
+    printf("------------------HTML message sent-------------------\n");
+
     close(new_socket);
   }
   return 0;

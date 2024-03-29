@@ -8,7 +8,8 @@
 #include <unistd.h>
 
 // Trying to trigger a POLLERR event by connecting to an invalid address
-// But it
+// But it doesnt work as expected: it just times out
+// 192.0.2.1 is invalid, cause it is reserved for documentation
 
 void set_non_blocking(int sockfd) {
   int flags = fcntl(sockfd, F_GETFL, 0);
