@@ -36,7 +36,5 @@ void print_revents(short revents) {
     printf("POLLRDBAND\n");
   if (revents & POLLWRBAND)
     printf("POLLWRBAND\n");
-  if (revents & POLLEXTEND)
-    printf("POLLEXTEND\n");
   printf("\n");
 }
