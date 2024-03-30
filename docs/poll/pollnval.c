@@ -23,7 +23,7 @@ int main(void) {
   fds[0].events = POLLIN;
 
   // Intentionally invalid file descriptor to trigger POLLNVAL.
-  fds[1].fd = -1; // Invalid file descriptor.
+  fds[1].fd = 135; // Invalid file descriptor.
   fds[1].events = POLLIN;
 
   // Poll with a timeout of 5000 milliseconds (5 seconds).
